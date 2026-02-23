@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package cache;
+
+option go_package = "pkg/genproto/cache";
+
+service CacheService {
+  rpc Get(CacheGetRequest) returns (CacheGetResponse);
+  rpc Set(CacheSetRequest) returns (CacheSetResponse);
+  rpc Delete(CacheDeleteRequest) returns (CacheDeleteResponse);
+}
+
+message CacheGetRequest {
+  string key = 1;
+}
+
+message CacheGetResponse {
+  bytes value = 1;
+  bool found = 2;
+}
+
+message CacheSetRequest {
+  string key = 1;
+  bytes value = 2;
+  int64 ttl_seconds = 3; // 0 означает бессрочно
+}
+
+message CacheSetResponse {
+  bool success = 1;
+}
+
+message CacheDeleteRequest {
+  string key = 1;
+}
+
+message CacheDeleteResponse {
+  bool success = 1;
+}
