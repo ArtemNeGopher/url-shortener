@@ -3,7 +3,8 @@ package worker
 import (
 	"testing"
 	"time"
-	"url-shortener/services/analytics-service/models"
+
+	"github.com/ArtemNeGopher/url-shortener/services/analytics-service/models"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
