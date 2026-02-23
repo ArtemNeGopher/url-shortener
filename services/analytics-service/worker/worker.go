@@ -25,7 +25,7 @@ type WorkerPool struct {
 
 func New(workers int, batchSize int, repo Repository) *WorkerPool {
 	return &WorkerPool{
-		jobQueue:    make(chan models.ClickEvent, batchSize*2), // Очередь в два раза больше батча
+		jobQueue:    make(chan models.ClickEvent, batchSize),
 		stopChan:    make(chan struct{}),
 		wg:          &sync.WaitGroup{},
 		workerCount: workers,

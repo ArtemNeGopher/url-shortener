@@ -1,7 +1,6 @@
 package worker
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -77,7 +76,6 @@ func TestWorkerPoolBatching(t *testing.T) {
 
 	// Ждем обработки
 	time.Sleep(2 * time.Second)
-	fmt.Println("after sleep")
 
 	// Проверяем что BatchInsertClicks был вызван минимум 1 раз
 	repo.AssertCalled(t, "BatchInsertClicks", mock.Anything)
