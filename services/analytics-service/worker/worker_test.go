@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -24,18 +25,12 @@ func (m *MockRepository) UpdateStats(shortCode string) error {
 	return args.Error(0)
 }
 
-func (m *MockRepository) GetStats(shortCode string) (*Stats, error) {
+func (m *MockRepository) GetStats(shortCode string) (*models.Stats, error) {
 	args := m.Called(shortCode)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*Stats), args.Error(1)
-}
-
-type Stats struct {
-	TotalClicks    int64
-	UniqueVisitors int64
-	LastClickedAt  *time.Time
+	return args.Get(0).(*models.Stats), args.Error(1)
 }
 
 func TestWorkerPoolSubmit(t *testing.T) {
@@ -65,7 +60,7 @@ func TestWorkerPoolBatching(t *testing.T) {
 	repo.On("BatchInsertClicks", mock.Anything).Return(nil)
 	repo.On("UpdateStats", mock.Anything).Return(nil)
 
-	pool := New(2, 1000, repo)
+	pool := New(2, 100, repo)
 	pool.Start()
 	defer pool.Stop()
 
@@ -82,6 +77,7 @@ func TestWorkerPoolBatching(t *testing.T) {
 
 	// Ждем обработки
 	time.Sleep(2 * time.Second)
+	fmt.Println("after sleep")
 
 	// Проверяем что BatchInsertClicks был вызван минимум 1 раз
 	repo.AssertCalled(t, "BatchInsertClicks", mock.Anything)
