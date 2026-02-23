@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ArtemNeGopher/url-shortener/services/cache-service/grpc"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -31,6 +32,8 @@ type Cache struct {
 	localMu  sync.RWMutex
 	stopCh   chan struct{}
 }
+
+var _ grpc.Cache = (*Cache)(nil)
 
 func New(client *redis.Client) *Cache {
 	cache := &Cache{
