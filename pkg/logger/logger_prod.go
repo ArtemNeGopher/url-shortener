@@ -13,8 +13,8 @@ import (
 )
 
 func MustInit() *slog.Logger {
-	err := os.MkdirAll("logs", 0o755)
-	filePath := fmt.Sprintf("logs/%s.log", time.Now().Format("2006-01-02_15-04"))
+	err := os.MkdirAll("/var/log/app", 0o755)
+	filePath := fmt.Sprintf("/var/log/app/%s.log", time.Now().Format("2006-01-02_15-04"))
 	if err != nil {
 		panic(err)
 	}
