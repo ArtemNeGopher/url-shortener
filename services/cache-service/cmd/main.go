@@ -14,6 +14,7 @@ import (
 	"github.com/ArtemNeGopher/url-shortener/services/cache-service/cache"
 	cfg "github.com/ArtemNeGopher/url-shortener/services/cache-service/config"
 	implGRPC "github.com/ArtemNeGopher/url-shortener/services/cache-service/grpc"
+	"github.com/ArtemNeGopher/url-shortener/services/cache-service/middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -38,7 +39,9 @@ func main() {
 
 	// Create grpc server
 	implServer := implGRPC.NewServer(cache, config.LocalTTL)
-	server := grpc.NewServer()
+	server := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(middleware.GetLoggingInterceptor(log)),
+	)
 	log.Debug("gRPC server created")
 
 	// Reflections
