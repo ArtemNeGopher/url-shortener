@@ -19,10 +19,10 @@ type Cache interface {
 }
 
 type server struct {
-	pb.UnimplementedCacheServiceServer
 	cache    Cache
 	cacheTTL time.Duration
 	log      *slog.Logger
+	pb.UnimplementedCacheServiceServer
 }
 
 func NewServer(cache Cache, cacheTTL time.Duration, log *slog.Logger) *server {
