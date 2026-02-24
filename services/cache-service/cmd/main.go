@@ -28,7 +28,7 @@ func main() {
 	log := logger.MustInit()
 
 	// Redis client
-	rdb := InitRedis(config.RedisAddr)
+	rdb := InitRedis(config.RedisAddr, config.RedisPoolSize)
 	log.Debug("Redis client created",
 		slog.String("addr", config.RedisAddr))
 
