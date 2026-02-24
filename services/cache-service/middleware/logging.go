@@ -11,7 +11,7 @@ import (
 )
 
 func GetLoggingInterceptor(log *slog.Logger) grpc.UnaryServerInterceptor {
-	log = log.With(slog.String("context", "grpc"))
+	log = log.With(slog.String("context", "grpc-middleware"))
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		start := time.Now()
 		log.Debug(

@@ -3,7 +3,6 @@ package grpc
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -27,7 +26,7 @@ func NewServer(cache Cache, cacheTTL time.Duration, log *slog.Logger) *server {
 	return &server{
 		cache:    cache,
 		cacheTTL: cacheTTL,
-		log:      log.With(slog.String("context", "grpc")),
+		log:      log.With(slog.String("context", "grpc-server")),
 	}
 }
 
@@ -42,7 +41,7 @@ func (s *server) Set(ctx context.Context, req *pb.CacheSetRequest) (*pb.CacheSet
 		"Cahce set",
 		slog.String("key", req.Key),
 		slog.String("value", req.Value),
-		slog.String("success", fmt.Sprintf("%v", success)),
+		slog.Bool("success", success),
 	)
 
 	return &pb.CacheSetResponse{Success: success}, nil
@@ -62,6 +61,7 @@ func (s *server) Get(ctx context.Context, req *pb.CacheGetRequest) (*pb.CacheGet
 			"Cache get",
 			slog.String("key", req.Key),
 			slog.String("value", value),
+			slog.Bool("found", found),
 		)
 	}
 
@@ -85,7 +85,7 @@ func (s *server) Delete(ctx context.Context, req *pb.CacheDeleteRequest) (*pb.Ca
 		s.log.Info(
 			"Cache get",
 			slog.String("key", req.Key),
-			slog.String("success", fmt.Sprintf("%v", success)),
+			slog.Bool("success", success),
 		)
 	}
 
