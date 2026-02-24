@@ -5,7 +5,6 @@ package analytics;
 option go_package = "pkg/genproto/analytics";
 
 import "google/protobuf/timestamp.proto";
-import "google/type/date.proto";
 
 service AnalyticsService {
   rpc RecordClick(ClickEvent) returns (ClickResponse);
@@ -38,7 +37,7 @@ message StatsResponse {
 
 message DayStatsRequest {
   string short_code = 1;
-  google.type.Date date = 2;
+  google.protobuf.Timestamp date = 2;
 }
 
 message DayStatsResponse {
