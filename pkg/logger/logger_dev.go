@@ -1,8 +1,6 @@
 //go:build !prod
 
 // Package logger
-// Логирование в консоль не в проде
-// Логирование в файл в проде
 package logger
 
 import (

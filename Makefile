@@ -1,4 +1,4 @@
-.PHONY: proto up down logs test clean migrate-up migrate-down
+.PHONY: proto up down logs test clean migrate-up migrate-down psql
 
 proto:
 	protoc --go_out=. --go-grpc_out=. proto/*.proto
@@ -28,3 +28,6 @@ migrate-down:
 
 bench:
 	go test -bench=. -benchmem ./pkg/...
+
+psql:
+	docker-compose exec postgres psql -U urlshortener urlshortener
