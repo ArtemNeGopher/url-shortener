@@ -1,5 +1,3 @@
--- DROP EXTENSION IF EXISTS geoip;
-
 -- Удаляем индексы для таблицы clicks
 DROP INDEX IF EXISTS idx_clicks_short_code;
 DROP INDEX IF EXISTS idx_clicks_clicked_at;

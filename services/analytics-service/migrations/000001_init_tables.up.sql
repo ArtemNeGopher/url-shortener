@@ -1,5 +1,3 @@
--- CREATE EXTENSION IF NOT EXISTS geoip;
-
 -- Таблица для хранения кликов по коротким ссылкам
 CREATE TABLE clicks (
     id BIGSERIAL PRIMARY KEY,
