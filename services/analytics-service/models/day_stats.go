@@ -2,10 +2,10 @@ package models
 
 import "time"
 
-type Stats struct {
+type DayStats struct {
 	ShortCode      string
+	Day            time.Time
 	TotalClicks    int64
 	UniqueVisitors int64
-	LastClickedAt  *time.Time
 	Referers       []string
 }

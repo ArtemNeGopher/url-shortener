@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"io"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -9,6 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+func mockLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelError}))
+}
 
 type MockRepository struct {
 	mock.Mock
@@ -34,7 +40,10 @@ func (m *MockRepository) GetStats(shortCode string) (*models.Stats, error) {
 
 func TestWorkerPoolSubmit(t *testing.T) {
 	repo := new(MockRepository)
-	pool := New(2, 100, repo)
+
+	log := mockLogger()
+
+	pool := New(2, 100, repo, log)
 
 	// Не запускаем pool.Start(), проверяем только очередь
 	event := models.ClickEvent{
@@ -59,7 +68,9 @@ func TestWorkerPoolBatching(t *testing.T) {
 	repo.On("BatchInsertClicks", mock.Anything).Return(nil)
 	repo.On("UpdateStats", mock.Anything).Return(nil)
 
-	pool := New(2, 100, repo)
+	log := mockLogger()
+
+	pool := New(2, 100, repo, log)
 	pool.Start()
 	defer pool.Stop()
 

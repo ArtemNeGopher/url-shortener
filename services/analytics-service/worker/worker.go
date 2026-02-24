@@ -2,6 +2,7 @@
 package worker
 
 import (
+	"log/slog"
 	"sync"
 	"time"
 
@@ -21,15 +22,18 @@ type WorkerPool struct {
 	workerCount int
 	repo        Repository
 	batchSize   int
+	log         *slog.Logger
 }
 
-func New(workers int, batchSize int, repo Repository) *WorkerPool {
+func New(workers int, batchSize int, repo Repository, log *slog.Logger) *WorkerPool {
 	return &WorkerPool{
 		jobQueue:    make(chan models.ClickEvent, batchSize),
 		stopChan:    make(chan struct{}),
 		wg:          &sync.WaitGroup{},
 		workerCount: workers,
 		repo:        repo,
+		batchSize:   batchSize,
+		log:         log,
 	}
 }
 
@@ -67,18 +71,30 @@ func (w *WorkerPool) worker() {
 			batchByTime = true
 		}
 
-		if stop || len(batch) < w.batchSize || batchByTime {
-			if err := w.repo.BatchInsertClicks(batch); err != nil {
-				// TODO: Логирование
-			}
-			for _, event := range batch {
-				if err := w.repo.UpdateStats(event.ShortCode); err != nil {
-					// TODO: Логирование
+		batchLen := len(batch)
+
+		// Не процессим, если батч пустой
+		if batchLen > 0 {
+			if stop || batchLen >= w.batchSize || batchByTime {
+				w.log.Debug("Processing batch", slog.Int("size", len(batch)))
+				if err := w.repo.BatchInsertClicks(batch); err != nil {
+					w.log.Error(
+						"Failed to insert clicks",
+						slog.String("error", err.Error()),
+					)
 				}
+				for _, event := range batch {
+					if err := w.repo.UpdateStats(event.ShortCode); err != nil {
+						w.log.Error(
+							"Failed to insert clicks",
+							slog.String("error", err.Error()),
+						)
+					}
+				}
+				// Обнуляем батч
+				batch = batch[:0]
+				batchByTime = false
 			}
-			// Обнуляем батч
-			batch = batch[:0]
-			batchByTime = false
 		}
 	}
 }
