@@ -3,11 +3,14 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"time"
 
 	pb "github.com/ArtemNeGopher/url-shortener/pkg/genproto/cache"
 )
+
+var ErrCanceled = errors.New("canceled")
 
 type Cache interface {
 	Set(ctx context.Context, key string, value string, ttl time.Duration) error
@@ -30,12 +33,24 @@ func NewServer(cache Cache, cacheTTL time.Duration, log *slog.Logger) *server {
 	}
 }
 
+var _ pb.CacheServiceServer = (*server)(nil)
+
 func (s *server) Set(ctx context.Context, req *pb.CacheSetRequest) (*pb.CacheSetResponse, error) {
-	err := s.cache.Set(ctx, req.Key, req.Value, s.cacheTTL)
-	success := true
-	if err != nil {
-		success = false
+	done := make(chan struct{})
+	var err error
+
+	go func() {
+		err = s.cache.Set(ctx, req.Key, req.Value, s.cacheTTL)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-ctx.Done():
+		return nil, ErrCanceled
 	}
+
+	success := err != nil
 
 	s.log.Info(
 		"Cahce set",
@@ -48,7 +63,21 @@ func (s *server) Set(ctx context.Context, req *pb.CacheSetRequest) (*pb.CacheSet
 }
 
 func (s *server) Get(ctx context.Context, req *pb.CacheGetRequest) (*pb.CacheGetResponse, error) {
-	value, found, err := s.cache.Get(ctx, req.Key)
+	done := make(chan struct{})
+	var value string
+	var found bool
+	var err error
+
+	go func() {
+		value, found, err = s.cache.Get(ctx, req.Key)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-ctx.Done():
+		return nil, ErrCanceled
+	}
 
 	if err != nil {
 		s.log.Error(
@@ -69,11 +98,21 @@ func (s *server) Get(ctx context.Context, req *pb.CacheGetRequest) (*pb.CacheGet
 }
 
 func (s *server) Delete(ctx context.Context, req *pb.CacheDeleteRequest) (*pb.CacheDeleteResponse, error) {
-	err := s.cache.Delete(ctx, req.Key)
-	success := true
-	if err != nil {
-		success = false
+	done := make(chan struct{})
+	var err error
+
+	go func() {
+		err = s.cache.Delete(ctx, req.Key)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-ctx.Done():
+		return nil, ErrCanceled
 	}
+
+	success := err != nil
 
 	if err != nil {
 		s.log.Error(

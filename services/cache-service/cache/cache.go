@@ -2,12 +2,15 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
 	"github.com/ArtemNeGopher/url-shortener/services/cache-service/grpc"
 	"github.com/go-redis/redis/v8"
 )
+
+var ErrCanceled = errors.New("canceled")
 
 type item struct {
 	Data      string
@@ -70,12 +73,25 @@ func (c *Cache) Clean() {
 
 func (c *Cache) Close() {
 	c.client.Close()
-	<-c.stopCh
+	c.stopCh <- struct{}{}
 }
 
 func (c *Cache) Set(ctx context.Context, key string, value string, ttl time.Duration) error {
-	// Устанавливаем в Redis
-	err := c.client.Set(ctx, key, value, ttl).Err()
+	done := make(chan struct{})
+	var err error
+
+	go func() {
+		// Устанавливаем в Redis
+		err = c.client.Set(ctx, key, value, ttl).Err()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-ctx.Done():
+		return ErrCanceled
+	}
+
 	if err != nil {
 		return err
 	}
@@ -112,7 +128,21 @@ func (c *Cache) Get(ctx context.Context, key string) (string, bool, error) {
 
 	// Не нашли в локальном кэше
 	// Идём в редис
-	val, err := c.client.Get(ctx, key).Result()
+	done := make(chan struct{})
+	var val string
+	var err error
+
+	go func() {
+		val, err = c.client.Get(ctx, key).Result()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-ctx.Done():
+		return "", false, ErrCanceled
+	}
+
 	if err == redis.Nil {
 		return "", false, nil
 	}
@@ -135,6 +165,22 @@ func (c *Cache) Delete(ctx context.Context, key string) error {
 	c.localMu.Unlock()
 
 	// Удаляем из редис
-	err := c.client.Del(ctx, key).Err()
-	return err
+	done := make(chan struct{})
+	var err error
+
+	go func() {
+		err = c.client.Del(ctx, key).Err()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-ctx.Done():
+		return ErrCanceled
+	}
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
