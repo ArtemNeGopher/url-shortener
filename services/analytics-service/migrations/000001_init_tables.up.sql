@@ -1,13 +1,29 @@
--- DROP EXTENSION IF EXISTS geoip;
+-- CREATE EXTENSION IF NOT EXISTS geoip;
 
--- Удаляем индексы для таблицы clicks
-DROP INDEX IF EXISTS idx_clicks_short_code;
-DROP INDEX IF EXISTS idx_clicks_clicked_at;
-DROP INDEX IF EXISTS idx_clicks_ip_address;
+-- Таблица для хранения кликов по коротким ссылкам
+CREATE TABLE clicks (
+    id BIGSERIAL PRIMARY KEY,
+    short_code VARCHAR(10) NOT NULL,
+    clicked_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    ip_address INET NULL,
+    user_agent TEXT NULL,
+    referer TEXT NULL,
+    country VARCHAR(2) NULL
+);
 
--- Удаляем индекс для таблицы url_stats
-DROP INDEX IF EXISTS idx_url_stats_updated_at;
+-- Индексы для таблицы clicks
+CREATE INDEX idx_clicks_short_code ON clicks(short_code);
+CREATE INDEX idx_clicks_clicked_at ON clicks(clicked_at);
+CREATE INDEX idx_clicks_ip_address ON clicks(ip_address);
 
--- Удаляем таблицы (важно: порядок важен из-за внешних ключей, если они будут)
-DROP TABLE IF EXISTS clicks;
-DROP TABLE IF EXISTS url_stats;
+-- Таблица для агрегированной статистики по URL
+CREATE TABLE url_stats (
+    short_code VARCHAR(10) PRIMARY KEY,
+    total_clicks BIGINT NOT NULL DEFAULT 0,
+    unique_visitors BIGINT NOT NULL DEFAULT 0,
+    last_clicked_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Индекс для таблицы url_stats
+CREATE INDEX idx_url_stats_updated_at ON url_stats(updated_at);
