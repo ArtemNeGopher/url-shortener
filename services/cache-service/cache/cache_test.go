@@ -27,7 +27,7 @@ func TestCacheSetAndGet(t *testing.T) {
 	rdb := setupTestRedis(t)
 	defer rdb.Close()
 
-	c := New(rdb)
+	c := New(rdb, 5*time.Minute)
 	ctx := context.Background()
 
 	err := c.Set(ctx, "test-key", "test-value", 1*time.Minute)
@@ -43,7 +43,7 @@ func TestCacheGetNotFound(t *testing.T) {
 	rdb := setupTestRedis(t)
 	defer rdb.Close()
 
-	c := New(rdb)
+	c := New(rdb, 5*time.Minute)
 	ctx := context.Background()
 
 	value, found, err := c.Get(ctx, "non-existent-key")
@@ -56,7 +56,7 @@ func TestCacheDelete(t *testing.T) {
 	rdb := setupTestRedis(t)
 	defer rdb.Close()
 
-	c := New(rdb)
+	c := New(rdb, time.Minute)
 	ctx := context.Background()
 
 	err := c.Set(ctx, "delete-test", "value", 1*time.Minute)
@@ -74,7 +74,7 @@ func TestCacheLocalMemory(t *testing.T) {
 	rdb := setupTestRedis(t)
 	defer rdb.Close()
 
-	c := New(rdb)
+	c := New(rdb, 5*time.Minute)
 	ctx := context.Background()
 
 	// Устанавливаем в Redis
@@ -107,7 +107,7 @@ func TestCacheExpiration(t *testing.T) {
 	rdb := setupTestRedis(t)
 	defer rdb.Close()
 
-	c := New(rdb)
+	c := New(rdb, 5*time.Minute)
 	ctx := context.Background()
 
 	// Устанавливаем с коротким TTL
@@ -132,7 +132,7 @@ func BenchmarkCacheGet(b *testing.B) {
 	rdb := setupTestRedis(&testing.T{})
 	defer rdb.Close()
 
-	c := New(rdb)
+	c := New(rdb, 5*time.Minute)
 	ctx := context.Background()
 
 	c.Set(ctx, "bench-key", "bench-value", 1*time.Hour)
@@ -147,7 +147,7 @@ func BenchmarkCacheSet(b *testing.B) {
 	rdb := setupTestRedis(&testing.T{})
 	defer rdb.Close()
 
-	c := New(rdb)
+	c := New(rdb, 5*time.Minute)
 	ctx := context.Background()
 
 	b.ResetTimer()

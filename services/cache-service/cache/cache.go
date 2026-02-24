@@ -9,11 +9,6 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-const (
-	// Максимально время жизни InMemory кэша
-	localTTL time.Duration = 5 * time.Minute
-)
-
 type item struct {
 	Data      string
 	ExpiresAt time.Time // Когда запись умрёт
@@ -31,16 +26,18 @@ type Cache struct {
 	localMap map[string]*item
 	localMu  sync.RWMutex
 	stopCh   chan struct{}
+	localTTL time.Duration
 }
 
 var _ grpc.Cache = (*Cache)(nil)
 
-func New(client *redis.Client) *Cache {
+func New(client *redis.Client, localTTL time.Duration) *Cache {
 	cache := &Cache{
 		client:   client,
 		localMap: make(map[string]*item),
 		localMu:  sync.RWMutex{},
 		stopCh:   make(chan struct{}),
+		localTTL: localTTL,
 	}
 
 	// Запуск фоновой очистки каждую минуту
@@ -84,7 +81,7 @@ func (c *Cache) Set(ctx context.Context, key string, value string, ttl time.Dura
 	}
 
 	// Высчитываем сколько времени кэш будет жить локально
-	localTTL := localTTL
+	localTTL := c.localTTL
 	if ttl < localTTL {
 		localTTL = ttl
 	}
@@ -125,7 +122,7 @@ func (c *Cache) Get(ctx context.Context, key string) (string, bool, error) {
 
 	// Сохраняем локально
 	c.localMu.Lock()
-	c.localMap[key] = newItem(val, localTTL)
+	c.localMap[key] = newItem(val, c.localTTL)
 	c.localMu.Unlock()
 
 	return val, true, nil

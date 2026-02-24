@@ -15,6 +15,7 @@ import (
 	cfg "github.com/ArtemNeGopher/url-shortener/services/cache-service/config"
 	implGRPC "github.com/ArtemNeGopher/url-shortener/services/cache-service/grpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
@@ -31,13 +32,20 @@ func main() {
 		slog.String("addr", config.RedisAddr))
 
 	// Create Cache
-	cache := cache.New(rdb)
+	cache := cache.New(rdb, config.LocalTTL)
+	defer cache.Close() // Закрываем кэш
 	log.Debug("Cache created")
 
 	// Create grpc server
-	implServer := implGRPC.NewServer(cache)
+	implServer := implGRPC.NewServer(cache, config.LocalTTL)
 	server := grpc.NewServer()
 	log.Debug("gRPC server created")
+
+	// Reflections
+	reflection.Register(server)
+	log.Debug("gRPC reflection registered")
+
+	// Register grpc
 	pb.RegisterCacheServiceServer(server, implServer)
 	log.Debug("gRPC server registered")
 
