@@ -3,14 +3,11 @@ package grpc
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"time"
 
 	pb "github.com/ArtemNeGopher/url-shortener/pkg/genproto/cache"
 )
-
-var ErrCanceled = errors.New("canceled")
 
 type Cache interface {
 	Set(ctx context.Context, key string, value string, ttl time.Duration) error
@@ -47,7 +44,7 @@ func (s *server) Set(ctx context.Context, req *pb.CacheSetRequest) (*pb.CacheSet
 	select {
 	case <-done:
 	case <-ctx.Done():
-		return nil, ErrCanceled
+		return nil, context.Canceled
 	}
 
 	success := err != nil
@@ -76,7 +73,7 @@ func (s *server) Get(ctx context.Context, req *pb.CacheGetRequest) (*pb.CacheGet
 	select {
 	case <-done:
 	case <-ctx.Done():
-		return nil, ErrCanceled
+		return nil, context.Canceled
 	}
 
 	if err != nil {
@@ -109,7 +106,7 @@ func (s *server) Delete(ctx context.Context, req *pb.CacheDeleteRequest) (*pb.Ca
 	select {
 	case <-done:
 	case <-ctx.Done():
-		return nil, ErrCanceled
+		return nil, context.Canceled
 	}
 
 	success := err != nil

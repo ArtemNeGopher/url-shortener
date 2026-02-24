@@ -2,15 +2,12 @@ package cache
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"time"
 
 	"github.com/ArtemNeGopher/url-shortener/services/cache-service/grpc"
 	"github.com/go-redis/redis/v8"
 )
-
-var ErrCanceled = errors.New("canceled")
 
 type item struct {
 	Data      string
@@ -89,7 +86,7 @@ func (c *Cache) Set(ctx context.Context, key string, value string, ttl time.Dura
 	select {
 	case <-done:
 	case <-ctx.Done():
-		return ErrCanceled
+		return context.Canceled
 	}
 
 	if err != nil {
@@ -140,7 +137,7 @@ func (c *Cache) Get(ctx context.Context, key string) (string, bool, error) {
 	select {
 	case <-done:
 	case <-ctx.Done():
-		return "", false, ErrCanceled
+		return "", false, context.Canceled
 	}
 
 	if err == redis.Nil {
@@ -176,7 +173,7 @@ func (c *Cache) Delete(ctx context.Context, key string) error {
 	select {
 	case <-done:
 	case <-ctx.Done():
-		return ErrCanceled
+		return context.Canceled
 	}
 
 	if err != nil {
