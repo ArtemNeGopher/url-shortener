@@ -5,10 +5,12 @@ package analytics;
 option go_package = "pkg/genproto/analytics";
 
 import "google/protobuf/timestamp.proto";
+import "google/type/date.proto";
 
 service AnalyticsService {
   rpc RecordClick(ClickEvent) returns (ClickResponse);
   rpc GetStatistics(StatsRequest) returns (StatsResponse);
+  rpc GetDayStatistics(DayStatsRequest) returns (DayStatsResponse);
 }
 
 message ClickEvent {
@@ -28,8 +30,19 @@ message StatsRequest {
 }
 
 message StatsResponse {
+  int64 total_clicks = 1;
+  int64 unique_visitors = 2;
+  google.protobuf.Timestamp last_clicked_at = 3;
+  repeated string referers = 4;
+}
+
+message DayStatsRequest {
   string short_code = 1;
-  int64 total_clicks = 2;
-  int64 unique_visitors = 3;
-  google.protobuf.Timestamp last_clicked_at = 4;
+  google.type.Date date = 2;
+}
+
+message DayStatsResponse {
+  int64 total_clicks = 1;
+  int64 unique_visitors = 2;
+  repeated string referers = 3;
 }
