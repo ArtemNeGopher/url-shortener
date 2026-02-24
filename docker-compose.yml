@@ -109,6 +109,8 @@ services:
       - "50053:50053"
     environment:
       - REDIS_ADDR=redis:6379
+    volumes:
+      - ./logs/cache-service:/var/log/app
     depends_on:
       redis:
         condition: service_healthy

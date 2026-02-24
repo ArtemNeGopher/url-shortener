@@ -38,7 +38,7 @@ func main() {
 	log.Debug("Cache created")
 
 	// Create grpc server
-	implServer := implGRPC.NewServer(cache, config.LocalTTL)
+	implServer := implGRPC.NewServer(cache, config.LocalTTL, log)
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(middleware.GetLoggingInterceptor(log)),
 	)

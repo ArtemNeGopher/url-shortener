@@ -11,6 +11,7 @@ import (
 )
 
 func GetLoggingInterceptor(log *slog.Logger) grpc.UnaryServerInterceptor {
+	log = log.With(slog.String("context", "grpc"))
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		start := time.Now()
 		log.Debug(
@@ -29,13 +30,13 @@ func GetLoggingInterceptor(log *slog.Logger) grpc.UnaryServerInterceptor {
 			log.Error("Error",
 				slog.String("method", info.FullMethod),
 				slog.String("code", fmt.Sprintf("%v", st.Code())),
-				slog.Duration("duration", duration),
+				slog.String("duration", fmt.Sprintf("%vms", duration.Milliseconds())),
 			)
 		} else {
 			log.Info(
-				"",
+				"Success",
 				slog.String("method", info.FullMethod),
-				slog.Duration("duration", duration),
+				slog.String("duration", fmt.Sprintf("%vms", duration.Milliseconds())),
 			)
 		}
 
