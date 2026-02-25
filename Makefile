@@ -1,4 +1,4 @@
-.PHONY: proto up down logs test clean migrate-up migrate-down psql
+.PHONY: proto up down logs test clean migrate-up migrate-down new-migrate psql
 
 proto:
 	protoc --go_out=. --go-grpc_out=. proto/*.proto
@@ -25,6 +25,11 @@ migrate-up:
 
 migrate-down:
 	docker-compose exec url-service migrate -path /migrations -database "postgres://urlshortener:password@postgres:5432/urlshortener?sslmode=disable" down
+
+new-migrate:
+	@read -p "Enter service name: " service; \
+	read -p "Enter migration name: " name; \
+	migrate create -seq -ext sql -dir ./services/$$service/migrations $$name
 
 bench:
 	go test -bench=. -benchmem ./pkg/...
