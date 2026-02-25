@@ -1,10 +1,8 @@
 package models
 
-import "time"
-
 type DayStats struct {
 	ShortCode      string
-	Day            time.Time
+	Date           string
 	TotalClicks    int64
 	UniqueVisitors int64
 	Referers       []string

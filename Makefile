@@ -21,7 +21,7 @@ clean:
 	find . -name "*.pb.go" -delete
 
 migrate-up:
-	docker-compose exec url-service migrate -path /migrations -database "postgres://urlshortener:password@postgres:5432/urlshortener?sslmode=disable" up
+	migrate -path ./services/analytics-service/migrations -database "postgres://urlshortener:password@localhost:5432/urlshortener?sslmode=disable" up
 
 migrate-down:
 	docker-compose exec url-service migrate -path /migrations -database "postgres://urlshortener:password@postgres:5432/urlshortener?sslmode=disable" down

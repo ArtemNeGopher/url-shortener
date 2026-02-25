@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/ArtemNeGopher/url-shortener/pkg/genproto/analytics"
 	pb "github.com/ArtemNeGopher/url-shortener/pkg/genproto/analytics"
@@ -49,6 +50,12 @@ func (s *server) RecordClick(ctx context.Context, req *analytics.ClickEvent) (*a
 		slog.String("referer", req.Referer),
 		slog.Time("stamp", req.ClickedAt.AsTime()),
 	)
+
+	// Клик произошёл в будущем, отклоняем
+	if req.ClickedAt.AsTime().After(time.Now()) {
+		return &analytics.ClickResponse{Success: false}, nil
+	}
+
 	event := models.ClickEvent{
 		ShortCode: req.ShortCode,
 		IPAddress: req.IpAddress,
@@ -95,6 +102,17 @@ func (s *server) GetStatistics(ctx context.Context, req *analytics.StatsRequest)
 func (s *server) GetDayStatistics(ctx context.Context, req *analytics.DayStatsRequest) (*analytics.DayStatsResponse, error) {
 	date := req.Date.AsTime().Format("2006-01-02")
 	s.log.Info("GetDayStatistics", slog.String("short_code", req.ShortCode), slog.String("date", date))
+
+	// Так как в будущем, возвращаем пустую структуру
+	if req.Date.AsTime().After(time.Now()) {
+		resp := &analytics.DayStatsResponse{
+			TotalClicks:    0,
+			UniqueVisitors: 0,
+			Referers:       []string{},
+		}
+
+		return resp, nil
+	}
 
 	done := make(chan struct{})
 	var stats *models.DayStats

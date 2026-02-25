@@ -62,16 +62,24 @@ func (w *WorkerPool) worker() {
 	stop := false
 	batchByTime := false
 	for !stop {
-		select {
-		case job := <-w.jobQueue:
-			batch = append(batch, job)
-		case <-w.stopChan:
-			stop = true
-		case <-time.After(1 * time.Second): // Если секунду нет событий, то отправляем так
-			batchByTime = true
-		}
-
 		batchLen := len(batch)
+		if batchLen > 0 {
+			select {
+			case job := <-w.jobQueue:
+				batch = append(batch, job)
+			case <-w.stopChan:
+				stop = true
+			case <-time.After(1 * time.Second): // Если секунду нет событий, то отправляем так
+				batchByTime = true
+			}
+		} else { // Если батч пустой, то спим
+			select {
+			case job := <-w.jobQueue:
+				batch = append(batch, job)
+			case <-w.stopChan:
+				stop = true
+			}
+		}
 
 		// Не процессим, если батч пустой
 		if batchLen > 0 {
