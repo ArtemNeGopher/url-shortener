@@ -100,8 +100,6 @@ func migrations(databaseURL string, log *slog.Logger) {
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		panic(err)
 	}
-	v, _, err := m.Version()
-	log.Info(fmt.Sprintf("version %v", v))
 
 	if sErr, dbErr := m.Close(); sErr != nil || dbErr != nil {
 		log.Error(fmt.Sprintf("Error closing migrate: %v %v", sErr, dbErr))

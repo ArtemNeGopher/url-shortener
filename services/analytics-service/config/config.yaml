@@ -7,5 +7,5 @@ database:
   max_idle_connections: 25
 
 worker:
-  batch_size: 100
+  batch_size: 2000
   count: 10
