@@ -25,7 +25,7 @@ type server struct {
 	pb.UnimplementedAnalyticsServiceServer
 }
 
-func NewService(repo StatsRepository, log *slog.Logger) *server {
+func NewServer(repo StatsRepository, log *slog.Logger) *server {
 	recordWorker := worker.New(10, 100, repo, log)
 	recordWorker.Start()
 

@@ -20,6 +20,6 @@ COPY services/analytics-service/migrations ./migrations
 COPY --from=builder /app/main ./
 
 
-EXPOSE 50053
+EXPOSE 50052
 
 CMD ["./main"]

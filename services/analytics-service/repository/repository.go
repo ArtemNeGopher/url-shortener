@@ -52,6 +52,8 @@ func (repo *eventRepository) BatchInsertClicks(events []models.ClickEvent) error
 		return nil
 	}
 
+	repo.log.Debug("batch inserting clicks", slog.Int("count", len(events)))
+
 	sql := sq.Insert("clicks").
 		Columns("short_code", "ip_address", "referer", "user_agent", "clicked_at").
 		PlaceholderFormat(sq.Dollar)
@@ -61,7 +63,13 @@ func (repo *eventRepository) BatchInsertClicks(events []models.ClickEvent) error
 	}
 
 	_, err := sql.RunWith(repo.db).Exec()
-	return err
+	if err != nil {
+		repo.log.Error("failed to batch insert clicks", slog.String("error", err.Error()))
+		return err
+	}
+
+	repo.log.Debug("successfully inserted clicks", slog.Int("count", len(events)))
+	return nil
 }
 
 func (repo *eventRepository) UpdateStats(shortCode string) error {
@@ -84,8 +92,8 @@ func (repo *eventRepository) UpdateStats(shortCode string) error {
 		return err
 	}
 
-	var uniqueVisitors int64
-	uniqueQuery := sq.Select("SUM(user_count) AS unique_visitors").
+	var uniqueVisitors sql.NullInt64
+	uniqueQuery := sq.Select("COALESCE(SUM(user_count), 0) AS unique_visitors").
 		FromSelect(
 			sq.Select("COUNT(DISTINCT user_agent) AS user_count").
 				From("clicks").
@@ -187,8 +195,8 @@ func (repo *eventRepository) UpdateDayStats(shortCode string, date string) error
 	}
 	defer tx.Rollback()
 
-	var uniqueVisitors int64
-	uniqueQuery := sq.Select("SUM(user_count) AS unique_visitors").
+	var uniqueVisitors sql.NullInt64
+	uniqueQuery := sq.Select("COALESCE(SUM(user_count), 0) AS unique_visitors").
 		FromSelect(
 			sq.Select("COUNT(DISTINCT user_agent) AS user_count").
 				From("clicks").

@@ -41,7 +41,7 @@ func main() {
 	log.Debug("repository created")
 
 	// GRPC
-	implServer := implGRPC.NewService(repo, log)
+	implServer := implGRPC.NewServer(repo, log)
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(logger.GetLoggingInterceptor(log)),
 	)

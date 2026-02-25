@@ -1,0 +1,12 @@
+host: "0.0.0.0"
+port: 50051
+url_create_retries: 5
+
+database:
+  database_url: "postgres://urlshortener:password@postgres:5432/urlshortener?sslmode=disable"
+  max_open_connections: 25
+  max_idle_connections: 25
+
+worker:
+  batch_size: 100
+  count: 10
