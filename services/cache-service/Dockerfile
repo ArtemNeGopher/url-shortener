@@ -1,8 +1,6 @@
 # ====================== Build Stage ======================
 FROM golang:1.25.7-alpine AS builder
 
-ARG SERVICE_PATH
-
 WORKDIR /app
 
 COPY go.mod go.sum ./
@@ -14,8 +12,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -tags=prod -o /app/main ./services/cache-s
 
 # ====================== Run Stage ======================
 FROM alpine:3.23.3
-
-ARG SERVICE_PATH
 
 WORKDIR /app
 

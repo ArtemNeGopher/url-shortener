@@ -8,15 +8,15 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -tags=prod -o /app/main ./services/analytics-service/cmd/
+RUN CGO_ENABLED=0 GOOS=linux go build -tags=prod -o /app/main ./services/url-service/cmd/
 
 # ====================== Run Stage ======================
 FROM alpine:3.23.3
 
 WORKDIR /app
 
-COPY services/analytics-service/config/config.yaml ./config/
-COPY services/analytics-service/migrations ./migrations
+COPY services/url-service/config/config.yaml ./config/
+COPY services/url-service/migrations ./migrations
 COPY --from=builder /app/main ./
 
 
