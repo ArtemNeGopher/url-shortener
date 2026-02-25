@@ -14,8 +14,7 @@ service URLService {
 
 message CreateURLRequest {
   string url = 1;
-  optional string user_id = 2;
-  optional int32 expires_in_days = 3;
+  optional int32 expires_in_days = 2;
 }
 
 message CreateURLResponse {
@@ -28,11 +27,9 @@ message GetURLRequest {
 }
 
 message GetURLResponse {
-  string original_url = 1;
-  bool is_active = 2;
-  google.protobuf.Timestamp expires_at = 3;
-  string user_id = 4;
-  google.protobuf.Timestamp created_at = 5;
+  bool success = 1;
+  optional string original_url = 2;
+  optional google.protobuf.Timestamp expires_at = 3;
 }
 
 message DeleteURLRequest {
