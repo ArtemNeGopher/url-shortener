@@ -2,6 +2,7 @@
 package worker
 
 import (
+	"context"
 	"log/slog"
 	"sync"
 	"time"
@@ -17,7 +18,9 @@ type Repository interface {
 
 type WorkerPool struct {
 	jobQueue    chan models.ClickEvent
-	stopChan    chan struct{}
+	batchQueue  chan []models.ClickEvent
+	stopCtx     context.Context
+	stopFn      context.CancelFunc
 	wg          *sync.WaitGroup
 	workerCount int
 	repo        Repository
@@ -26,9 +29,13 @@ type WorkerPool struct {
 }
 
 func New(workers int, batchSize int, repo Repository, log *slog.Logger) *WorkerPool {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	return &WorkerPool{
 		jobQueue:    make(chan models.ClickEvent, batchSize),
-		stopChan:    make(chan struct{}),
+		batchQueue:  make(chan []models.ClickEvent),
+		stopCtx:     ctx,
+		stopFn:      cancel,
 		wg:          &sync.WaitGroup{},
 		workerCount: workers,
 		repo:        repo,
@@ -46,63 +53,64 @@ func (w *WorkerPool) Start() {
 		w.wg.Add(1)
 		go w.worker()
 	}
+
+	go func() {
+		stop := false
+		var job models.ClickEvent
+		batch := make([]models.ClickEvent, w.batchSize)
+
+		timer := time.NewTimer(1 * time.Second)
+		defer timer.Stop()
+
+		i := 0
+		for !stop {
+			select {
+			case job = <-w.jobQueue:
+				batch[i] = job
+				if i++; i >= w.batchSize {
+					// Делаем копию
+					local := make([]models.ClickEvent, i)
+					copy(batch[:i], local)
+					w.batchQueue <- local
+
+					// Сбрасываем счётчик
+					i = 0
+				}
+				timer.Reset(1 * time.Second)
+			case <-timer.C:
+				if i != 0 {
+					// Делаем копию
+					local := make([]models.ClickEvent, i)
+					copy(batch[:i], local)
+					w.batchQueue <- local
+
+					// Сбрасываем счётчик
+					i = 0
+				}
+			case <-w.stopCtx.Done():
+				stop = true
+			}
+		}
+	}()
 }
 
 func (w *WorkerPool) Stop() {
-	for range w.workerCount {
-		w.stopChan <- struct{}{}
-	}
+	w.stopFn()
 	w.wg.Wait()
 }
 
 func (w *WorkerPool) worker() {
 	defer w.wg.Done()
 
-	batch := make([]models.ClickEvent, 0, w.batchSize)
-	stop := false
-	batchByTime := false
-	for !stop {
-		batchLen := len(batch)
-		if batchLen > 0 {
-			select {
-			case job := <-w.jobQueue:
-				batch = append(batch, job)
-			case <-w.stopChan:
-				stop = true
-			case <-time.After(1 * time.Second): // Если секунду нет событий, то отправляем так
-				batchByTime = true
-			}
-		} else { // Если батч пустой, то спим
-			select {
-			case job := <-w.jobQueue:
-				batch = append(batch, job)
-			case <-w.stopChan:
-				stop = true
-			}
+	for {
+		var batch []models.ClickEvent
+		select {
+		case batch = <-w.batchQueue:
+		case <-w.stopCtx.Done():
+			return
 		}
-
-		// Не процессим, если батч пустой
-		if batchLen > 0 {
-			if stop || batchLen >= w.batchSize || batchByTime {
-				w.log.Debug("Processing batch", slog.Int("size", len(batch)))
-				if err := w.repo.BatchInsertClicks(batch); err != nil {
-					w.log.Error(
-						"Failed to insert clicks",
-						slog.String("error", err.Error()),
-					)
-				}
-				for _, event := range batch {
-					if err := w.repo.UpdateStats(event.ShortCode); err != nil {
-						w.log.Error(
-							"Failed to insert clicks",
-							slog.String("error", err.Error()),
-						)
-					}
-				}
-				// Обнуляем батч
-				batch = batch[:0]
-				batchByTime = false
-			}
+		if err := w.repo.BatchInsertClicks(batch); err != nil {
+			w.log.Error("failed to insert batch", "error", err)
 		}
 	}
 }
