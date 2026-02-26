@@ -2,8 +2,11 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"time"
+
+	u "net/url"
 
 	"github.com/ArtemNeGopher/url-shortener/pkg/genproto/url"
 	pb "github.com/ArtemNeGopher/url-shortener/pkg/genproto/url"
@@ -31,11 +34,21 @@ func NewServer(repo URLRepository, urlCreateRetries uint, log *slog.Logger) *ser
 	}
 }
 
+func isURL(str string) bool {
+	u, err := u.ParseRequestURI(str)
+	// Для абсолютных URL: u.Scheme и u.Host должны быть не пустыми
+	return err == nil && u.Scheme != "" && u.Host != ""
+}
+
 func (s *server) CreateShortURL(ctx context.Context, req *url.CreateURLRequest) (*url.CreateURLResponse, error) {
 	expiresAt := &time.Time{}
 	if req.ExpiresInDays != nil && *req.ExpiresInDays != 0 {
 		*expiresAt = time.Now().Add(time.Hour * 24 * time.Duration(*req.ExpiresInDays))
 	}
+	if !isURL(req.Url) {
+		return nil, errors.New("invalid url")
+	}
+
 	done := make(chan struct{})
 
 	crUrl := &models.URL{
