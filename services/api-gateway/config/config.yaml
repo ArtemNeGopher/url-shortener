@@ -1,0 +1,11 @@
+host: "0.0.0.0"
+port: "8080"
+
+url_client:
+  addr: "url-service:50051"
+
+analytics_client:
+  addr: "analytics-service:50052"
+
+cache_client:
+  addr: "cache-service:50053"

@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package url;
+
+option go_package = "pkg/genproto/url";
+
+import "google/protobuf/timestamp.proto";
+
+service URLService {
+  rpc CreateShortURL(CreateURLRequest) returns (CreateURLResponse);
+  rpc GetOriginalURL(GetURLRequest) returns (GetURLResponse);
+  rpc DeleteURL(DeleteURLRequest) returns (DeleteURLResponse);
+}
+
+message CreateURLRequest {
+  string url = 1;
+  optional uint32 expires_in_days = 2;
+}
+
+message CreateURLResponse {
+  string short_code = 1;
+  optional google.protobuf.Timestamp expires_at = 2;
+}
+
+message GetURLRequest {
+  string short_code = 1;
+}
+
+message GetURLResponse {
+  string url = 1;
+  bool is_active = 2;
+  optional google.protobuf.Timestamp expires_at = 3;
+}
+
+message DeleteURLRequest {
+  string short_code = 1;
+}
+
+message DeleteURLResponse {
+  bool success = 1;
+}

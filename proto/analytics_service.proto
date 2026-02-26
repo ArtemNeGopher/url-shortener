@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package analytics;
+
+option go_package = "pkg/genproto/analytics";
+
+import "google/protobuf/timestamp.proto";
+
+service AnalyticsService {
+  rpc RecordClick(ClickEvent) returns (ClickResponse);
+  rpc GetStatistics(StatsRequest) returns (StatsResponse);
+  rpc GetDayStatistics(DayStatsRequest) returns (DayStatsResponse);
+}
+
+message ClickEvent {
+  string short_code = 1;
+  string ip_address = 2;
+  string user_agent = 3;
+  string referer = 4;
+  google.protobuf.Timestamp clicked_at = 5;
+}
+
+message ClickResponse {
+  bool success = 1;
+}
+
+message StatsRequest {
+  string short_code = 1;
+}
+
+message StatsResponse {
+  int64 total_clicks = 1;
+  int64 unique_visitors = 2;
+  google.protobuf.Timestamp last_clicked_at = 3;
+  repeated string referers = 4;
+}
+
+message DayStatsRequest {
+  string short_code = 1;
+  google.protobuf.Timestamp date = 2;
+}
+
+message DayStatsResponse {
+  int64 total_clicks = 1;
+  int64 unique_visitors = 2;
+  repeated string referers = 3;
+}

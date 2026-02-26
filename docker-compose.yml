@@ -33,7 +33,7 @@ services:
 
   # Run URL service migrations first
   url-migrations:
-    image: migrate/migrate:v4.16.2
+    image: migrate/migrate:v4.19.1
     volumes:
       - ./services/url-service/migrations:/migrations
     entrypoint: ["/bin/sh", "-c"]
@@ -50,7 +50,7 @@ services:
 
   # Run Analytics service migrations separately
   analytics-migrations:
-    image: migrate/migrate:v4.16.2
+    image: migrate/migrate:v4.19.1
     volumes:
       - ./services/analytics-service/migrations:/migrations
     entrypoint: ["/bin/sh", "-c"]

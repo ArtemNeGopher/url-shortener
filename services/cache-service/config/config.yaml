@@ -1,0 +1,6 @@
+host: "0.0.0.0"
+port: 50053
+local_ttl: 5m
+redis_addr: "localhost:6379"
+redis_ttl: 1h
+redis_pool_size: 10

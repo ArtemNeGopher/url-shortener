@@ -29,7 +29,6 @@ type ShortenRequest struct {
 
 type ShortenResponse struct {
 	ShortCode string `json:"short_code"`
-	ShortURL  string `json:"short_url"`
 }
 
 type StatsResponse struct {
@@ -188,7 +187,7 @@ func TestMain(m *testing.M) {
 			fmt.Println("Services are not ready after 30 seconds")
 			return
 		default:
-			resp, err := http.Get(fmt.Sprintf("%s/stats/test", apiGatewayURL))
+			resp, err := http.Get(fmt.Sprintf("%s/stats/test123", apiGatewayURL))
 			if err == nil {
 				resp.Body.Close()
 				if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusInternalServerError {

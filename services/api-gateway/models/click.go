@@ -1,12 +1,13 @@
 // Package models
+// Models for services
 package models
 
 import "time"
 
-type ClickEvent struct {
+type Click struct {
 	ShortCode string
-	IPAddress string
+	IPAdress  string
 	UserAgent string
 	Referer   string
-	Timestamp time.Time
+	ClickedAt time.Time
 }
