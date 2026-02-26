@@ -7,6 +7,8 @@ import (
 )
 
 func RegisterRoutes(r *gin.Engine, h *Handler) {
+	r.StaticFile("/", "./index.html")
+
 	// Редирект
 	// Редирект на оригинальный URL; 301
 	// URL с таким кодом не существует; 404

@@ -70,12 +70,13 @@ func (repo *urlRepository) TryRegisterURL(url *models.URL) error {
 	q := sq.Insert("urls")
 
 	if url.ExpiresAt != nil {
-		q = q.Columns("short_code", "original_url", "expires_at")
+		q = q.Columns("short_code", "original_url", "expires_at").
+			Values(url.ShortCode, url.URL, url.ExpiresAt)
 	} else {
-		q = q.Columns("short_code", "original_url")
+		q = q.Columns("short_code", "original_url").
+			Values(url.ShortCode, url.URL)
 	}
-	_, err = q.Values(url.ShortCode, url.URL, url.ExpiresAt).
-		PlaceholderFormat(sq.Dollar).
+	_, err = q.PlaceholderFormat(sq.Dollar).
 		RunWith(tx).
 		Exec()
 	if err != nil {

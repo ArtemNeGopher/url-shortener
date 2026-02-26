@@ -70,7 +70,7 @@ func (w *WorkerPool) Start() {
 				if i++; i >= w.batchSize {
 					// Делаем копию
 					local := make([]models.ClickEvent, i)
-					copy(batch[:i], local)
+					copy(local, batch[:i])
 					w.batchQueue <- local
 
 					// Сбрасываем счётчик
@@ -81,13 +81,16 @@ func (w *WorkerPool) Start() {
 				if i != 0 {
 					// Делаем копию
 					local := make([]models.ClickEvent, i)
-					copy(batch[:i], local)
+					copy(local, batch[:1])
 					w.batchQueue <- local
 
 					// Сбрасываем счётчик
 					i = 0
 				}
 			case <-w.stopCtx.Done():
+				local := make([]models.ClickEvent, i)
+				copy(local, batch[:i])
+				w.batchQueue <- local
 				stop = true
 			}
 		}
@@ -111,6 +114,9 @@ func (w *WorkerPool) worker() {
 		}
 		if err := w.repo.BatchInsertClicks(batch); err != nil {
 			w.log.Error("failed to insert batch", "error", err)
+		}
+		if err := w.repo.UpdateStats(batch[0].ShortCode); err != nil {
+			w.log.Error("failed to update stats", "error", err)
 		}
 	}
 }

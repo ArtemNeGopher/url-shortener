@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>URL Shortener</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink:         #111318;
+      --ink-mid:     #4a4f5e;
+      --ink-light:   #9299aa;
+      --surface:     #f5f4f0;
+      --card:        #ffffff;
+      --accent:      #3d5afe;
+      --accent-dim:  #c7cfff;
+      --accent-bg:   #f7f8ff;
+      --accent-glow: rgba(61,90,254,.14);
+      --danger:      #e53935;
+      --border:      #e3e4e8;
+      --radius-sm:   8px;
+      --radius-md:   14px;
+      --radius-lg:   24px;
+      --shadow:      0 2px 4px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.07), 0 24px 48px rgba(0,0,0,.04);
+      --font:        'DM Sans', sans-serif;
+      --mono:        'DM Mono', monospace;
+      --tr:          200ms cubic-bezier(.4,0,.2,1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+
+    body {
+      min-height: 100dvh;
+      background: var(--surface);
+      font-family: var(--font);
+      color: var(--ink);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px 80px;
+      background-image:
+        linear-gradient(rgba(61,90,254,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(61,90,254,.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* ── Header ────────────────────────────────────────────────── */
+    header {
+      margin-bottom: 36px;
+      animation: slideDown .4s cubic-bezier(.4,0,.2,1) both;
+    }
+    .page-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -.02em;
+      color: var(--ink);
+    }
+
+    /* ── Card ──────────────────────────────────────────────────── */
+    .card {
+      width: 100%;
+      max-width: 640px;
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 36px 40px 32px;
+    }
+    .card + .card {
+      margin-top: 16px;
+      animation: fadeUp .45s cubic-bezier(.4,0,.2,1) .1s both;
+    }
+    .card:first-of-type {
+      animation: fadeUp .45s cubic-bezier(.4,0,.2,1) .05s both;
+    }
+
+    /* ── Section label ─────────────────────────────────────────── */
+    .section-label {
+      font-size: .7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--ink-light);
+      margin-bottom: 16px;
+    }
+
+    /* ── Generic field ─────────────────────────────────────────── */
+    .field {
+      flex: 1;
+      min-width: 0;
+      height: 46px;
+      padding: 0 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: .875rem;
+      color: var(--ink);
+      background: #fafafa;
+      outline: none;
+      transition: border-color var(--tr), box-shadow var(--tr), background var(--tr);
+    }
+    .field::placeholder { color: var(--ink-light); }
+    .field:focus {
+      border-color: var(--accent);
+      background: #fff;
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .field.is-error {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 3px rgba(229,57,53,.1);
+    }
+    .field.mono { font-family: var(--mono); font-size: .82rem; }
+
+    /* ── Input rows ────────────────────────────────────────────── */
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .input-row + .input-row { margin-top: 10px; }
+
+    /* ── Buttons ───────────────────────────────────────────────── */
+    .btn {
+      height: 46px;
+      padding: 0 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: .85rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background var(--tr), transform var(--tr), box-shadow var(--tr);
+    }
+    .btn:disabled { opacity: .55; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+    .btn-primary {
+      background: var(--ink);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #232730;
+      box-shadow: 0 4px 14px rgba(17,19,24,.18);
+      transform: translateY(-1px);
+    }
+    .btn-primary:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-accent:hover:not(:disabled) {
+      background: #2a46e8;
+      transform: translateY(-1px);
+    }
+    .btn-accent:active:not(:disabled) { transform: translateY(0); }
+    .btn-accent.copied { background: #2e7d32; pointer-events: none; }
+
+    /* ── Error / hint text ─────────────────────────────────────── */
+    .msg {
+      margin-top: 8px;
+      font-size: .78rem;
+      display: none;
+    }
+    .msg.visible { display: block; animation: shake .26s cubic-bezier(.36,.07,.19,.97); }
+    .msg.error   { color: var(--danger); }
+    .msg.hint    { color: var(--ink-light); display: block; animation: none; }
+
+    /* ── Result box (shorten) ──────────────────────────────────── */
+    .result-box {
+      margin-top: 16px;
+      background: var(--accent-bg);
+      border: 1.5px solid var(--accent-dim);
+      border-radius: var(--radius-md);
+      padding: 16px 16px 16px 18px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .result-box.visible { display: flex; animation: fadeUp .28s cubic-bezier(.4,0,.2,1) both; }
+
+    .result-icon {
+      width: 32px; height: 32px;
+      background: var(--accent-dim);
+      border-radius: 50%;
+      display: grid; place-items: center;
+      flex-shrink: 0;
+      color: var(--accent);
+    }
+    .result-link-wrap { flex: 1; min-width: 0; }
+    .result-label {
+      font-size: .65rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .09em;
+      color: var(--ink-light); margin-bottom: 3px;
+    }
+    .result-link {
+      font-family: var(--mono); font-size: .85rem;
+      font-weight: 500; color: var(--accent);
+      word-break: break-all;
+    }
+    .result-meta { font-size: .7rem; color: var(--ink-light); margin-top: 2px; }
+
+    /* ── Stats result ──────────────────────────────────────────── */
+    .stats-result {
+      margin-top: 16px;
+      display: none;
+    }
+    .stats-result.visible { display: block; animation: fadeUp .28s cubic-bezier(.4,0,.2,1) both; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .stats-grid.two-col { grid-template-columns: repeat(2, 1fr); }
+
+    .stat-card {
+      background: var(--accent-bg);
+      border: 1px solid var(--accent-dim);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+    .stat-card-label {
+      font-size: .65rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: var(--ink-light); margin-bottom: 6px;
+    }
+    .stat-card-value {
+      font-size: 1.35rem; font-weight: 600;
+      letter-spacing: -.03em; color: var(--ink);
+      line-height: 1;
+    }
+    .stat-card-value.sm { font-size: .85rem; letter-spacing: 0; font-weight: 500; }
+    .stat-card-sub { font-size: .7rem; color: var(--ink-light); margin-top: 4px; }
+
+    /* Referers */
+    .referers-box {
+      background: var(--accent-bg);
+      border: 1px solid var(--accent-dim);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .referers-head {
+      padding: 9px 14px 7px;
+      font-size: .65rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: var(--ink-light);
+      border-bottom: 1px solid var(--accent-dim);
+    }
+    .referers-head.empty { border-bottom: none; }
+    .referer-row {
+      padding: 7px 14px;
+      font-family: var(--mono); font-size: .78rem;
+      color: var(--ink-mid);
+      border-bottom: 1px solid rgba(199,207,255,.5);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .referer-row:last-child { border-bottom: none; }
+    .referers-empty {
+      padding: 10px 14px;
+      font-size: .8rem; color: var(--ink-light);
+      font-style: italic;
+    }
+
+    /* Stats url hint */
+    .stats-url-hint {
+      margin-bottom: 10px;
+      font-family: var(--mono);
+      font-size: .72rem;
+      color: var(--ink-light);
+      background: #f5f5f5;
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      word-break: break-all;
+    }
+
+    /* ── Divider ───────────────────────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 28px 0 0;
+    }
+
+    /* ── Footer ────────────────────────────────────────────────── */
+    footer {
+      margin-top: 24px;
+      font-size: .74rem;
+      color: var(--ink-light);
+      animation: fadeUp .5s cubic-bezier(.4,0,.2,1) .2s both;
+    }
+    footer code { font-family: var(--mono); font-size: .7rem; }
+
+    /* ── Animations ────────────────────────────────────────────── */
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%     { transform: translateX(-4px); }
+      75%     { transform: translateX(4px); }
+    }
+
+    /* ── Responsive ────────────────────────────────────────────── */
+    @media (max-width: 520px) {
+      body { padding: 28px 14px 60px; }
+      .card { padding: 24px 20px 20px; }
+      .input-row { flex-direction: column; align-items: stretch; }
+      .btn { height: 44px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .stats-grid.two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <span class="page-title">URL Shortener</span>
+  </header>
+
+  <!-- ── Card 1: Shorten ─────────────────────────────────────── -->
+  <div class="card">
+    <div class="section-label">Сократить ссылку</div>
+
+    <div class="input-row">
+      <input
+        id="urlInput"
+        class="field"
+        type="url"
+        placeholder="https://your-very-long-url.com/goes/here"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Long URL to shorten"
+      />
+      <button class="btn btn-primary" id="shortenBtn">Shorten ↗</button>
+    </div>
+
+    <p class="msg error" id="shortenError" role="alert" aria-live="polite"></p>
+
+    <!-- Result -->
+    <div class="result-box" id="resultBox">
+      <div class="result-icon" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M5.5 2H3a1 1 0 0 0 0 2h1.5M8.5 2H11a1 1 0 0 1 0 2H9.5M4.5 3h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M5.5 10H3a1 1 0 0 0 0 2h1.5M8.5 10H11a1 1 0 0 1 0 2H9.5M4.5 11h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".4"/>
+          <path d="M7 4.5v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="result-link-wrap">
+        <div class="result-label">Short link</div>
+        <div class="result-link" id="resultLink"></div>
+        <div class="result-meta" id="expiresLabel"></div>
+      </div>
+      <button class="btn btn-accent" id="copyBtn" style="height:34px;padding:0 12px;font-size:.78rem;" aria-label="Copy">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="margin-right:4px" aria-hidden="true">
+          <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M2 7.5H1.5a.5.5 0 0 1-.5-.5V1.5A.5.5 0 0 1 1.5 1h5.5a.5.5 0 0 1 .5.5V2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>Copy
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Card 2: Statistics ──────────────────────────────────── -->
+  <div class="card">
+    <div class="section-label">Статистика</div>
+
+    <!-- Short code input -->
+    <div class="input-row">
+      <input
+        id="statsCode"
+        class="field mono"
+        type="text"
+        placeholder="Short code (например, abc1234)"
+        maxlength="7"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Short code"
+      />
+    </div>
+
+    <!-- Date input + button -->
+    <div class="input-row" style="margin-top:10px;">
+      <input
+        id="statsDate"
+        class="field"
+        type="date"
+        aria-label="Date (optional)"
+      />
+      <button class="btn btn-primary" id="statsBtn">Get stats</button>
+    </div>
+
+    <p class="msg hint">Если дата не указана — загружается общая статистика</p>
+    <p class="msg error" id="statsError" role="alert" aria-live="polite"></p>
+
+    <!-- Stats result -->
+    <div class="stats-result" id="statsResult">
+      <div class="stats-url-hint" id="statsUrlHint"></div>
+      <div id="statsContent"></div>
+    </div>
+  </div>
+
+  <footer>API: <code id="apiBaseDisplay"></code></footer>
+
+  <script>
+    /* ================================================================
+     * CONFIGURATION — поменяйте одну переменную, чтобы сменить среду
+     * ================================================================ */
+    const API_BASE_URL = 'http://192.168.1.50:8080';
+
+    document.getElementById('apiBaseDisplay').textContent = API_BASE_URL;
+
+    /* ================================================================
+     * API client
+     * ================================================================ */
+    const api = {
+      async _json(res) {
+        const text = await res.text();
+        try { return JSON.parse(text); }
+        catch {
+          throw new Error(
+            `Сервер вернул не-JSON (HTTP ${res.status}). ` +
+            `Убедитесь, что API запущен на ${API_BASE_URL}`
+          );
+        }
+      },
+
+      /** POST /shorten */
+      async shorten(url) {
+        const res = await fetch(`${API_BASE_URL}/shorten`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+        const d = await this._json(res);
+        if (!res.ok) throw new Error(d.error || `HTTP ${res.status}`);
+        return d; // { short_code, expires_at }
+      },
+
+      /** GET /stats/:shortCode */
+      async getStats(shortCode) {
+        const res = await fetch(`${API_BASE_URL}/stats/${shortCode}`);
+        const d = await this._json(res);
+        if (!res.ok) throw new Error(d.error || `HTTP ${res.status}`);
+        return d; // { short_code, total_clicks, unique_visitors, referers, last_clicked_at }
+      },
+
+      /** GET /stats/:shortCode/:date */
+      async getDailyStats(shortCode, date) {
+        const res = await fetch(`${API_BASE_URL}/stats/${shortCode}/${date}`);
+        const d = await this._json(res);
+        if (!res.ok) throw new Error(d.error || `HTTP ${res.status}`);
+        return d; // { short_code, date, total_clicks, unique_visitors, referers }
+      },
+    };
+
+    /* ================================================================
+     * Helpers
+     * ================================================================ */
+    function isValidUrl(v) {
+      try { const u = new URL(v.trim()); return u.protocol === 'http:' || u.protocol === 'https:'; }
+      catch { return false; }
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleDateString('ru-RU', { day:'2-digit', month:'short', year:'numeric' });
+    }
+
+    function fmtDateTime(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleString('ru-RU', {
+        day:'2-digit', month:'short', year:'numeric',
+        hour:'2-digit', minute:'2-digit',
+      });
+    }
+
+    function buildReferers(referers) {
+      const hasItems = referers && referers.length;
+      const rows = hasItems
+        ? referers.map(r => `<div class="referer-row">${r}</div>`).join('')
+        : `<div class="referers-empty">Нет данных о реферерах</div>`;
+      return `
+        <div class="referers-box">
+          <div class="referers-head ${hasItems ? '' : 'empty'}">Источники переходов</div>
+          ${rows}
+        </div>`;
+    }
+
+    function renderOverall(s) {
+      return `
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-label">Всего кликов</div>
+            <div class="stat-card-value">${(s.total_clicks ?? 0).toLocaleString('ru-RU')}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Уникальных</div>
+            <div class="stat-card-value">${(s.unique_visitors ?? 0).toLocaleString('ru-RU')}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Последний клик</div>
+            <div class="stat-card-value sm">${fmtDateTime(s.last_clicked_at)}</div>
+          </div>
+        </div>
+        ${buildReferers(s.referers)}`;
+    }
+
+    function renderDaily(s) {
+      return `
+        <div class="stats-grid two-col">
+          <div class="stat-card">
+            <div class="stat-card-label">Кликов за день</div>
+            <div class="stat-card-value">${(s.total_clicks ?? 0).toLocaleString('ru-RU')}</div>
+            <div class="stat-card-sub">${s.date}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Уникальных</div>
+            <div class="stat-card-value">${(s.unique_visitors ?? 0).toLocaleString('ru-RU')}</div>
+            <div class="stat-card-sub">${s.date}</div>
+          </div>
+        </div>
+        ${buildReferers(s.referers)}`;
+    }
+
+    /* ================================================================
+     * DOM refs
+     * ================================================================ */
+    const urlInput    = document.getElementById('urlInput');
+    const shortenBtn  = document.getElementById('shortenBtn');
+    const shortenErr  = document.getElementById('shortenError');
+    const resultBox   = document.getElementById('resultBox');
+    const resultLink  = document.getElementById('resultLink');
+    const expiresLbl  = document.getElementById('expiresLabel');
+    const copyBtn     = document.getElementById('copyBtn');
+
+    const statsCode   = document.getElementById('statsCode');
+    const statsDate   = document.getElementById('statsDate');
+    const statsBtn    = document.getElementById('statsBtn');
+    const statsErr    = document.getElementById('statsError');
+    const statsResult = document.getElementById('statsResult');
+    const statsUrlH   = document.getElementById('statsUrlHint');
+    const statsContent= document.getElementById('statsContent');
+
+    /* ================================================================
+     * Shorten
+     * ================================================================ */
+    async function handleShorten() {
+      const value = urlInput.value.trim();
+      urlInput.classList.remove('is-error');
+      hideMsg(shortenErr);
+
+      if (!value || !isValidUrl(value)) {
+        showMsg(shortenErr, 'Введите корректный URL, начинающийся с https:// или http://');
+        urlInput.classList.add('is-error');
+        urlInput.focus();
+        return;
+      }
+
+      shortenBtn.disabled = true;
+      shortenBtn.textContent = 'Загрузка…';
+      try {
+        const r = await api.shorten(value);
+        resultLink.textContent = `${API_BASE_URL}/${r.short_code}`;
+        expiresLbl.textContent = r.expires_at ? `Истекает: ${fmtDate(r.expires_at)}` : '';
+
+        resultBox.classList.remove('visible');
+        requestAnimationFrame(() => requestAnimationFrame(() => resultBox.classList.add('visible')));
+        resetCopyBtn();
+
+        // Подставляем short_code в поле статистики для удобства
+        if (!statsCode.value) statsCode.value = r.short_code;
+      } catch (e) {
+        showMsg(shortenErr, `Ошибка: ${e.message}`);
+        urlInput.classList.add('is-error');
+      } finally {
+        shortenBtn.disabled = false;
+        shortenBtn.textContent = 'Shorten ↗';
+      }
+    }
+
+    /* ================================================================
+     * Statistics
+     * ================================================================ */
+    async function handleStats() {
+      const code = statsCode.value.trim();
+      const date = statsDate.value.trim();
+
+      statsCode.classList.remove('is-error');
+      hideMsg(statsErr);
+      statsResult.classList.remove('visible');
+
+      if (!code) {
+        showMsg(statsErr, 'Введите short code');
+        statsCode.classList.add('is-error');
+        statsCode.focus();
+        return;
+      }
+
+      statsBtn.disabled = true;
+      statsBtn.textContent = '…';
+
+      // Показываем URL который запрашиваем
+      const endpoint = date
+        ? `${API_BASE_URL}/stats/${code}/${date}`
+        : `${API_BASE_URL}/stats/${code}`;
+      statsUrlH.textContent = endpoint;
+
+      try {
+        let s, html;
+        if (date) {
+          s    = await api.getDailyStats(code, date);
+          html = renderDaily(s);
+        } else {
+          s    = await api.getStats(code);
+          html = renderOverall(s);
+        }
+        statsContent.innerHTML = html;
+        statsResult.classList.remove('visible');
+        requestAnimationFrame(() => requestAnimationFrame(() => statsResult.classList.add('visible')));
+      } catch (e) {
+        showMsg(statsErr, `Ошибка: ${e.message}`);
+        statsCode.classList.add('is-error');
+      } finally {
+        statsBtn.disabled = false;
+        statsBtn.textContent = 'Get stats';
+      }
+    }
+
+    /* ================================================================
+     * Copy
+     * ================================================================ */
+    function handleCopy() {
+      const text = resultLink.textContent;
+      if (!text) return;
+      const done = () => {
+        copyBtn.classList.add('copied');
+        copyBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="margin-right:4px" aria-hidden="true">
+          <path d="M1 5.5l2.5 2.5 6-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>Copied!`;
+        setTimeout(resetCopyBtn, 2000);
+      };
+      navigator.clipboard.writeText(text).then(done).catch(() => {
+        const ta = Object.assign(document.createElement('textarea'), {
+          value: text, style: 'position:fixed;opacity:0'
+        });
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        done();
+      });
+    }
+
+    function resetCopyBtn() {
+      copyBtn.classList.remove('copied');
+      copyBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="margin-right:4px" aria-hidden="true">
+        <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M2 7.5H1.5a.5.5 0 0 1-.5-.5V1.5A.5.5 0 0 1 1.5 1h5.5a.5.5 0 0 1 .5.5V2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>Copy`;
+    }
+
+    /* ================================================================
+     * Message helpers
+     * ================================================================ */
+    function showMsg(el, text) {
+      el.textContent = text;
+      el.classList.add('visible');
+    }
+    function hideMsg(el) {
+      el.textContent = '';
+      el.classList.remove('visible');
+    }
+
+    /* ================================================================
+     * Event listeners
+     * ================================================================ */
+    shortenBtn.addEventListener('click', handleShorten);
+    copyBtn.addEventListener('click', handleCopy);
+    statsBtn.addEventListener('click', handleStats);
+
+    urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleShorten(); });
+    statsCode.addEventListener('keydown', e => { if (e.key === 'Enter') handleStats(); });
+    statsDate.addEventListener('keydown', e => { if (e.key === 'Enter') handleStats(); });
+
+    urlInput.addEventListener('input', () => {
+      urlInput.classList.remove('is-error');
+      hideMsg(shortenErr);
+    });
+    statsCode.addEventListener('input', () => {
+      statsCode.classList.remove('is-error');
+      hideMsg(statsErr);
+    });
+  </script>
+</body>
+</html>

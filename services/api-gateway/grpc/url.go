@@ -47,8 +47,9 @@ func (c *URLClient) CreateShortURL(ctx context.Context, urlFull string, expiresI
 		return nil, err
 	}
 
-	expiresAt := new(time.Time)
+	var expiresAt *time.Time = nil
 	if resp.ExpiresAt != nil {
+		expiresAt = new(time.Time)
 		*expiresAt = resp.ExpiresAt.AsTime()
 	}
 	return &models.URL{
@@ -69,8 +70,9 @@ func (c *URLClient) GetURL(ctx context.Context, shortCode string) (*models.URL, 
 		return nil, err
 	}
 
-	expiresAt := new(time.Time)
+	var expiresAt *time.Time = nil
 	if resp.ExpiresAt != nil {
+		expiresAt = new(time.Time)
 		*expiresAt = resp.ExpiresAt.AsTime()
 	}
 	return &models.URL{

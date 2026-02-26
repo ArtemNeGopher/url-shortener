@@ -75,6 +75,7 @@ func (h *Handler) GetOriginalURL(c *gin.Context) {
 			IPAdress:  c.ClientIP(),
 			UserAgent: c.Request.UserAgent(),
 			Referer:   c.Request.Referer(),
+			ClickedAt: time.Now(),
 		}
 
 		h.analyticsService.RegisterClick(click)
@@ -120,7 +121,7 @@ func (h *Handler) CreateShortURL(c *gin.Context) {
 		ExpiresAt: u.ExpiresAt,
 	}
 
-	c.JSON(http.StatusCreated, resp)
+	c.JSON(http.StatusOK, resp)
 }
 
 // GET /stats/:shortCode
@@ -143,12 +144,21 @@ func (h *Handler) GetStats(c *gin.Context) {
 		return
 	}
 
+	origURL, err := h.urlService.GetURL(shortCode)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "internal error"})
+		return
+	}
+
 	resp := &dto.GetStatsResponse{
 		ShortCode:      stats.ShortCode,
+		URL:            origURL.URL,
 		TotalClicks:    stats.TotalClicks,
 		UniqueVisitors: stats.UniqueVisitors,
 		LastClickedAt:  stats.LastClickedAt,
 		Referers:       stats.Referers,
+		IsActive:       origURL.IsActive,
+		ExpiresAt:      origURL.ExpiresAt,
 	}
 
 	c.JSON(http.StatusOK, resp)

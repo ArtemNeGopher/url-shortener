@@ -59,7 +59,15 @@ func (repo *eventRepository) BatchInsertClicks(events []models.ClickEvent) error
 		PlaceholderFormat(sq.Dollar)
 
 	for _, event := range events {
-		sql = sql.Values(event.ShortCode, event.IPAddress, event.Referer, event.UserAgent, event.Timestamp)
+		sql = sql.Values(event.ShortCode, event.IPAddress, event.Referer, event.UserAgent, event.Timestamp.Format(time.RFC3339))
+
+		repo.log.Info("Bathing",
+			slog.String("short_code", event.ShortCode),
+			slog.String("ip", event.IPAddress),
+			slog.String("referer", event.Referer),
+			slog.Time("stamp", event.Timestamp),
+			slog.String("user_agent", event.UserAgent),
+		)
 	}
 
 	_, err := sql.RunWith(repo.db).Exec()
@@ -170,11 +178,18 @@ func (repo *eventRepository) GetStats(shortCode string) (*models.Stats, error) {
 		PlaceholderFormat(sq.Dollar).
 		RunWith(repo.db)
 
+	lastClickedAt := sql.NullTime{}
+
 	stats := &models.Stats{}
 	var referersBytes []byte
-	err := statsQuery.QueryRow().Scan(&stats.TotalClicks, &stats.UniqueVisitors, &stats.LastClickedAt, &referersBytes)
+	err := statsQuery.QueryRow().Scan(&stats.TotalClicks, &stats.UniqueVisitors, &lastClickedAt, &referersBytes)
 	if err != nil {
 		return nil, err
+	}
+
+	if lastClickedAt.Valid {
+		stats.LastClickedAt = &time.Time{}
+		*stats.LastClickedAt = lastClickedAt.Time
 	}
 
 	if referersBytes != nil {

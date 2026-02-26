@@ -16,6 +16,7 @@ FROM alpine:3.23.3
 WORKDIR /app
 
 COPY services/api-gateway/config/config.yaml ./config/
+COPY services/api-gateway/frontend/index.html ./index.html
 COPY --from=builder /app/main ./
 
 

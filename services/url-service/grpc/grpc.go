@@ -41,8 +41,9 @@ func isURL(str string) bool {
 }
 
 func (s *server) CreateShortURL(ctx context.Context, req *url.CreateURLRequest) (*url.CreateURLResponse, error) {
-	expiresAt := &time.Time{}
+	var expiresAt *time.Time = nil
 	if req.ExpiresInDays != nil && *req.ExpiresInDays != 0 {
+		expiresAt = &time.Time{}
 		*expiresAt = time.Now().Add(time.Hour * 24 * time.Duration(*req.ExpiresInDays))
 	}
 	if !isURL(req.Url) {

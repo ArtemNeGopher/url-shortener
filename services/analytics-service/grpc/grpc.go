@@ -9,6 +9,7 @@ import (
 	pb "github.com/ArtemNeGopher/url-shortener/pkg/genproto/analytics"
 	"github.com/ArtemNeGopher/url-shortener/services/analytics-service/models"
 	"github.com/ArtemNeGopher/url-shortener/services/analytics-service/worker"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type StatsRepository interface {
@@ -94,6 +95,7 @@ func (s *server) GetStatistics(ctx context.Context, req *analytics.StatsRequest)
 		TotalClicks:    stats.TotalClicks,
 		UniqueVisitors: stats.UniqueVisitors,
 		Referers:       stats.Referers,
+		LastClickedAt:  timestamppb.New(*stats.LastClickedAt),
 	}
 
 	return resp, nil

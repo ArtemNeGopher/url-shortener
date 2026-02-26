@@ -27,9 +27,9 @@ func GetLoggingInterceptor(log *slog.Logger) grpc.UnaryServerInterceptor {
 		duration := time.Since(start)
 		if err != nil {
 			st, _ := status.FromError(err)
-			log.Error("Error",
+			log.Error(err.Error(),
 				slog.String("method", info.FullMethod),
-				slog.String("code", fmt.Sprintf("%v", st.Code())),
+				slog.String("code", fmt.Sprintf("%i", st.Code())),
 				slog.String("duration", fmt.Sprintf("%vms", duration.Milliseconds())),
 			)
 		} else {
