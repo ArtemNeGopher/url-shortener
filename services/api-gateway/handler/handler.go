@@ -156,8 +156,53 @@ func (h *Handler) GetStats(c *gin.Context) {
 
 // DELETE /:shortCode
 func (h *Handler) DeleteURL(c *gin.Context) {
+	shortCode, ok := c.Params.Get("shortCode")
+	if !ok {
+		err := errors.New("missing shortCode")
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	if err := dto.ValidateShortCode(shortCode); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	err := h.urlService.Delete(shortCode)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "internal error"})
+		return
+	}
+
+	c.Status(http.StatusOK)
 }
 
 // GET /stats/:shortCode/:date
 func (h *Handler) GetDayStats(c *gin.Context) {
+	shortCode, ok := c.Params.Get("shortCode")
+	if !ok {
+		err := errors.New("missing shortCode")
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	if err := dto.ValidateShortCode(shortCode); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	date, ok := c.Params.Get("date")
+	if !ok {
+		err := errors.New("missing date")
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	stats, err := h.analyticsService.GetDayStats(shortCode, date)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "internal error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, stats)
 }

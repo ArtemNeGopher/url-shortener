@@ -8,6 +8,7 @@ import (
 	"github.com/ArtemNeGopher/url-shortener/services/api-gateway/config"
 	"github.com/ArtemNeGopher/url-shortener/services/api-gateway/models"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -19,6 +20,7 @@ type AnalyticsClient struct {
 func NewAnalyticsClient(cfg *config.AnalyticsClientConfig) *AnalyticsClient {
 	conn, err := grpc.NewClient(
 		cfg.Addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		panic(err.Error())

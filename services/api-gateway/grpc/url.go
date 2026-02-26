@@ -8,6 +8,7 @@ import (
 	"github.com/ArtemNeGopher/url-shortener/services/api-gateway/config"
 	"github.com/ArtemNeGopher/url-shortener/services/api-gateway/models"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type URLClient struct {
@@ -18,6 +19,7 @@ type URLClient struct {
 func NewURLClient(cfg *config.URLClientConfig) *URLClient {
 	conn, err := grpc.NewClient(
 		cfg.Addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		panic(err.Error())

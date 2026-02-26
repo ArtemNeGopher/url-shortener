@@ -11,6 +11,7 @@ import (
 	"github.com/ArtemNeGopher/url-shortener/services/api-gateway/config"
 	"github.com/ArtemNeGopher/url-shortener/services/api-gateway/models"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type CacheClient struct {
@@ -21,6 +22,7 @@ type CacheClient struct {
 func NewCacheClient(cfg *config.CacheClientConfig) *CacheClient {
 	conn, err := grpc.NewClient(
 		cfg.Addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		panic(err.Error())
